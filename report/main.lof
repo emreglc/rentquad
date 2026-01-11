@@ -1,0 +1,10 @@
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces High-level architectural diagram showing interactions between the mobile application, Supabase backend, and autonomous quadricycle hardware.}}{5}{figure.2.1}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Home screen displaying available quadricycles on the map with real-time battery and distance indicators.}}{13}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Selected vehicle with detail card showing distance, battery level, and reservation option.}}{14}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Reserved vehicle status displayed on the map with reservation timer and active rental card.}}{15}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces QR scanning interface with visual frame overlay guiding the user to position the code correctly.}}{16}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Active Rental card showing live ride duration, distance, and estimated cost during an ongoing trip.}}{17}{figure.3.5}%

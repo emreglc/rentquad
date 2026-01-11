@@ -2,11 +2,11 @@
   "expo": {
     "name": "rentquad",
     "slug": "rentquad",
+    "scheme": "rentquad",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -20,10 +20,19 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA4xeWAToNEXXi8SC4EP1yvSuq8zh1-wuI"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "supabaseUrl": "https://hzixxksnyjwhtqvonxki.supabase.co",
+      "supabaseAnonKey": "sb_publishable_5GE-IZXwU0dyM2Et1kZfhA_Vm9fF9ec"
     }
   }
 }

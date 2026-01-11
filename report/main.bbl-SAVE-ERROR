@@ -1,0 +1,135 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{IoTArchitecture2021}{book}{}
+      \name{author}{4}{}{%
+        {{hash=85188b7e44c303979b27ad613e975907}{%
+           family={Mineraud},
+           familyi={M\bibinitperiod},
+           given={Julien},
+           giveni={J\bibinitperiod}}}%
+        {{hash=1e4facbff3c30dd1c3229bd01e97b4eb}{%
+           family={Mazhelis},
+           familyi={M\bibinitperiod},
+           given={Oleksiy},
+           giveni={O\bibinitperiod}}}%
+        {{hash=821af41d385cbd97318810fda36d2f9d}{%
+           family={Su},
+           familyi={S\bibinitperiod},
+           given={Xiang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=e935e5d3dbf7bbbe18aab2f618b1b740}{%
+           family={Tarkoma},
+           familyi={T\bibinitperiod},
+           given={Sasu},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier Computer Communications}%
+      }
+      \strng{namehash}{543f60cb58d4f75a496037bfc28ade66}
+      \strng{fullhash}{704d086417b94d4bebe9df895bb966c2}
+      \strng{bibnamehash}{704d086417b94d4bebe9df895bb966c2}
+      \strng{authorbibnamehash}{704d086417b94d4bebe9df895bb966c2}
+      \strng{authornamehash}{543f60cb58d4f75a496037bfc28ade66}
+      \strng{authorfullhash}{704d086417b94d4bebe9df895bb966c2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{A gap analysis of Internet-of-Things platforms}
+      \field{year}{2021}
+      \field{pages}{30\bibrangedash 48}
+      \range{pages}{19}
+    \endentry
+    \entry{SharedMobility2019}{article}{}
+      \name{author}{2}{}{%
+        {{hash=282db80d46ce05d352e5aaca70314ab9}{%
+           family={Shaheen},
+           familyi={S\bibinitperiod},
+           given={Susan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=d8e39d1f9783a02824cb766439b95fac}{%
+           family={Cohen},
+           familyi={C\bibinitperiod},
+           given={Adam},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{7f2921105d1614730d503e79757c2398}
+      \strng{fullhash}{7f2921105d1614730d503e79757c2398}
+      \strng{bibnamehash}{7f2921105d1614730d503e79757c2398}
+      \strng{authorbibnamehash}{7f2921105d1614730d503e79757c2398}
+      \strng{authornamehash}{7f2921105d1614730d503e79757c2398}
+      \strng{authorfullhash}{7f2921105d1614730d503e79757c2398}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Transportation Sustainability Research Center, UC Berkeley}
+      \field{number}{2}
+      \field{title}{Shared Micromobility Policy Toolkit: Docked and Dockless Bike and Scooter Sharing}
+      \field{volume}{1}
+      \field{year}{2019}
+      \field{pages}{1\bibrangedash 42}
+      \range{pages}{42}
+    \endentry
+    \entry{MobilityAsService2022}{article}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{3}{}{%
+        {{hash=30aa667d27c81aa720854472aa8c4b07}{%
+           family={Jittrapirom},
+           familyi={J\bibinitperiod},
+           given={Peraphan},
+           giveni={P\bibinitperiod}}}%
+        {{hash=a1ea77803be5abcfc831dd2228d59b07}{%
+           family={Caiati},
+           familyi={C\bibinitperiod},
+           given={Valeria},
+           giveni={V\bibinitperiod}}}%
+        {{hash=85e9dec393da0ada588a47ae5f37b8ea}{%
+           family={Feneri},
+           familyi={F\bibinitperiod},
+           given={Anna-Maria},
+           giveni={A\bibinithyphendelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{de2acb3b90d2d47f0c7cfa65724b9cd9}
+      \strng{fullhash}{011c65ba818229cb3364e94ae3509152}
+      \strng{bibnamehash}{011c65ba818229cb3364e94ae3509152}
+      \strng{authorbibnamehash}{011c65ba818229cb3364e94ae3509152}
+      \strng{authornamehash}{de2acb3b90d2d47f0c7cfa65724b9cd9}
+      \strng{authorfullhash}{011c65ba818229cb3364e94ae3509152}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Urban Planning}
+      \field{number}{2}
+      \field{title}{Mobility as a Service: A Critical Review of Definitions, Assessments of Schemes, and Key Challenges}
+      \field{volume}{7}
+      \field{year}{2022}
+      \field{pages}{119\bibrangedash 138}
+      \range{pages}{20}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

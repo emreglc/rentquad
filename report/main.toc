@@ -1,0 +1,43 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{Abstract}{iv}{chapter*.1}%
+\contentsline {chapter}{Özet}{v}{chapter*.2}%
+\contentsline {chapter}{Acknowledgement}{vi}{chapter*.3}%
+\contentsline {chapter}{List of Symbols and Abbreviations}{vii}{chapter*.4}%
+\contentsline {chapter}{Contents}{ix}{chapter*.5}%
+\contentsline {chapter}{List of Figures}{x}{chapter*.6}%
+\vspace {18pt}
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Background}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Problem Definition}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Objectives and Contributions}{1}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Requirements}{2}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Functional Requirements}{2}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Non-Functional Requirements}{3}{subsection.1.4.2}%
+\contentsline {section}{\numberline {1.5}Thesis Organization}{3}{section.1.5}%
+\contentsline {chapter}{\numberline {2}System Architecture and Design}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Overall Architecture}{4}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Mobile Application Architecture}{4}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Backend Data Model}{6}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Vehicle Integration and IoT Layer}{7}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Rental Flow Use Case}{7}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Vehicle Discovery}{7}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Reservation}{8}{subsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.5.3}QR Scan and Ride Start}{8}{subsection.2.5.3}%
+\contentsline {subsection}{\numberline {2.5.4}Active Ride Monitoring}{8}{subsection.2.5.4}%
+\contentsline {subsection}{\numberline {2.5.5}Find Vehicle}{8}{subsection.2.5.5}%
+\contentsline {subsection}{\numberline {2.5.6}Ride Termination and Payment}{9}{subsection.2.5.6}%
+\contentsline {chapter}{\numberline {3}Implementation and Results}{10}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Implementation Technologies}{10}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Key Implementation Highlights}{11}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Rental Flow State Machine}{11}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Authentication with Remember Me}{11}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Dynamic Marker Visibility}{11}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Real-Time Ride Metrics}{12}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Testing Methodology}{12}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Unit Testing}{12}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Integration Testing}{12}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.4}Results and Discussion}{13}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Conclusions}{18}{section.3.5}%
+\vspace {18pt}
+\contentsline {chapter}{Bibliography}{19}{chapter*.7}%
+\contentsline {chapter}{Appendices}{20}{chapter*.8}%

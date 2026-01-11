@@ -1,0 +1,44 @@
+\chapter*{Appendices}
+\addcontentsline{toc}{chapter}{Appendices}
+
+\section*{Appendix A: Supabase Database Schema}
+
+The complete PostgreSQL DDL script (\texttt{supabase/schema.sql}) defines 14 interconnected tables with PostGIS spatial extensions, enumerated types for vehicle and reservation statuses, and trigger functions for automated timestamp updates. Key tables include:
+
+\begin{itemize}
+    \item \texttt{profiles}: User identity and license verification.
+    \item \texttt{vehicles}: Fleet inventory with real-time location (PostGIS geography).
+    \item \texttt{reservations}: Holds vehicles for riders before QR scan.
+    \item \texttt{rides}: Active trips with telemetry and fare calculation.
+    \item \texttt{payments}: Transaction records linked to completed rides.
+    \item \texttt{vehicle\_locations}: Historical GPS waypoints for analytics.
+\end{itemize}
+
+Refer to the attached \texttt{schema.sql} file in the digital submission for full implementation details.
+
+\section*{Appendix B: Seed Data Script}
+
+The \texttt{supabase/seed.sql} file populates initial test data:
+
+\begin{itemize}
+    \item A standard pricing rule (base fee 9.90 TRY, unlock fee 4.50 TRY, per-minute 3.20 TRY, per-km 2.00 TRY).
+    \item Five quadricycles (RQ-001 through RQ-005) positioned at geographic coordinates in Gebze with battery percentages ranging from 58\% to 91\%.
+\end{itemize}
+
+This seed data enables immediate testing of reservation and ride workflows without manual database entry.
+
+\section*{Appendix C: Mobile Application Source Code Structure}
+
+The React Native workspace comprises approximately 3,000 lines of code organized as follows:
+
+\begin{itemize}
+    \item \texttt{App.js}: Root navigator with authentication gating.
+    \item \texttt{screens/}: Five tab screens (Home, Explore, ScanQR, Profile, Settings) plus Auth and Details.
+    \item \texttt{components/RideDetailsCard.js}: Reusable card component for active rental display.
+    \item \texttt{context/AuthContext.js}: Global session management with Supabase Auth.
+    \item \texttt{hooks/useRentalFlow.js}: Rental state machine with ten phases.
+    \item \texttt{lib/supabaseClient.js}: Singleton Supabase client initialization.
+    \item \texttt{lib/vehicleUtils.js}: Utility for formatting vehicle titles.
+\end{itemize}
+
+Complete source code is available in the accompanying digital archive submitted with this thesis.

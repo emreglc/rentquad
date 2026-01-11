@@ -1,0 +1,88 @@
+\chapter{System Architecture and Design}
+\label{cha:SystemArchitecture}
+
+This chapter describes the architecture of the RentQuad platform, including the mobile app, backend services, vehicle integration, and database design. Figure~\ref{fig:systemDiagram} shows a visual overview, and the following sections explain how each component works and interacts with others. The rental flow section walks through a typical usage scenario step by step.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{diagram.jpg}
+    \caption{\label{fig:systemDiagram}High-level architectural diagram showing interactions between the mobile application, Supabase backend, and autonomous quadricycle hardware.}
+\end{figure}
+
+\section{Overall Architecture}
+
+The system uses a three-tier structure that separates the interface, business logic, and data storage \cite{IoTArchitecture2021}:
+
+\begin{enumerate}
+    \item \textbf{Presentation Tier (Mobile Client):} The React Native app built with Expo works on both iOS and Android, providing screens for login, finding vehicles, making reservations, scanning QR codes, and monitoring rides. React Navigation handles the navigation between screens.
+    \item \textbf{Business Logic Tier (Backend Services):} Supabase handles user authentication with OAuth 2.0-style flows, enforces row-level security for vehicle data, and supports spatial queries through PostGIS. Custom backend functions manage reservation timeouts, ride events, and payment completion.
+    \item \textbf{Data Persistence Tier:} A PostgreSQL database with fourteen related tables (profiles, vehicles, vehicle\_locations, reservations, rides, payments, etc.) maintains data consistency and keeps audit logs. The \texttt{vehicles.current\_location} field stores PostGIS geography points that are indexed for efficient location queries.
+\end{enumerate}
+
+\section{Mobile Application Architecture}
+
+The client is organized into the following directory structure, consistent with React Native conventions:
+
+\begin{itemize}
+    \item \texttt{/screens}: Five primary views (Home, Explore, ScanQR, Profile, Settings) and subordinate modules such as Auth and Details.
+    \item \texttt{/components}: Reusable UI elements like \texttt{RideDetailsCard.js} that encapsulate card-based presentation and event callbacks.
+    \item \texttt{/context}: \texttt{AuthContext.js} manages global session state using Supabase Auth listeners and exposes \texttt{signIn}, \texttt{signUp}, and \texttt{signOut} methods to all child screens.
+    \item \texttt{/hooks}: \texttt{useRentalFlow.js} is a custom hook that implements the rental state machine with phases such as IDLE, RESERVING, RESERVED, SCANNING, RIDING, and ENDING.
+    \item \texttt{/lib}: Utility modules (\texttt{supabaseClient.js} for singleton creation, \texttt{vehicleUtils.js} for formatting vehicle titles) that are imported wherever complex domain logic or external service configuration is required.
+\end{itemize}
+
+React Context is used to avoid passing props through many components, and hooks manage side effects like timers, real-time updates, and GPS tracking. The map view on the Home screen uses \texttt{react-native-maps} and hides vehicles that are reserved or in use based on the current rental state.
+
+\section{Backend Data Model}
+
+The database schema is defined in \texttt{supabase/schema.sql} using PostgreSQL with PostGIS extensions. The main design decisions are:
+
+\begin{itemize}
+    \item \textbf{Profiles}: Extends the built-in \texttt{auth.users} table with domain fields (full name, phone number, license verification timestamp). Each rider is uniquely identified by a UUID that also serves as the primary key referencing the foreign-key constraints in reservations and rides tables.
+    \item \textbf{Vehicles}: Holds fleet inventory with attributes \texttt{code}, \texttt{display\_name}, \texttt{model}, \texttt{status}, \texttt{battery\_percent}, and PostGIS geography for \texttt{current\_location}. The \texttt{status} enumeration values are 'offline', 'available', 'reserved', 'in\_use', 'maintenance', and 'retired', enabling strict state transitions.
+    \item \textbf{Reservations}: Created when a user taps "Rezerve Et" on a map marker; includes expiration timestamp and foreign key references to both rider and vehicle. State transitions are logged in \texttt{reservation\_events}.
+    \item \textbf{Rides}: Represents an active trip from unlock to final locking, storing pickup and dropoff coordinates, duration, distance, and calculated fare. Telemetry updates are archived in \texttt{ride\_events}.
+    \item \textbf{Payments}: Linked to completed rides; tracks payment provider (iyzico, Stripe, or manual), settlement status, and any error codes surfaced from external processors.
+\end{itemize}
+
+All timestamps are stored in UTC with \texttt{timestamptz} to avoid time-zone ambiguities, and indexed columns (vehicle status, user reservations, ride timelines) accelerate frequent queries.
+
+\section{Vehicle Integration and IoT Layer}
+
+Each quadricycle is equipped with a custom microcontroller board that runs embedded firmware exposing three interfaces:
+
+\begin{enumerate}
+    \item \textbf{Lock/Unlock Control:} When the Supabase backend issues a ride-start command the vehicle controller receives the unlock signal via MQTT or HTTP webhook. The firmware actuates the solenoid lock and triggers confirmation LED/horn sequences.
+    \item \textbf{Telemetry Uplink:} GPS coordinates (latitude, longitude, heading) and battery percentage are transmitted every 5 seconds during an active ride. These data are inserted into the \texttt{vehicle\_locations} table and trigger real-time Supabase subscriptions that the client can poll.
+    \item \textbf{Find Vehicle Beacons:} The "Aracı Bul" feature requests a brief audible horn and flashing lights from the backend, forwarded over the IoT gateway to the selected quadricycle.
+\end{enumerate}
+
+While this thesis focuses on the software ecosystem, the hardware subsystem is documented separately in the embedded systems laboratory notes. The mobile app treats the vehicle as a black box accessible via Supabase RPC functions (\texttt{start\_ride}, \texttt{end\_ride}, \texttt{find\_vehicle}) that abstract the underlying MQTT or WebSocket communication.
+
+\section{Rental Flow Use Case}
+
+This section traces a typical rental scenario from discovery to payment closure.
+
+\subsection{Vehicle Discovery}
+The user launches the application and navigates to the Explore tab. The client queries \texttt{vehicles} with \texttt{status = 'available'} and orders results by Haversine distance to the user's current GPS location. Each vehicle is rendered as a card displaying estimated proximity, battery percentage, and a "Aracı gör" button that animates the map camera to the corresponding marker.
+
+\subsection{Reservation}
+On the Home screen, the user taps a vehicle marker, opens the detail panel, and presses "Rezerve Et". The \texttt{useRentalFlow} hook calls \texttt{beginRental(car)}, logging the event and transitioning the phase to SELECTING. After 1.3 seconds, \texttt{reserveVehicle} is invoked, inserting a row into \texttt{reservations} and updating \texttt{vehicles.status} to 'reserved'. The backend sets \texttt{expires\_at} to 10 minutes from creation; if no QR scan occurs before expiration the reservation automatically reverts the vehicle to 'available'.
+
+\subsection{QR Scan and Ride Start}
+The user walks to the quadricycle and opens the ScanQR tab. The \texttt{CameraView} from \texttt{expo-camera} captures the QR code printed on the vehicle chassis. The scanned string contains a token or vehicle ID that is validated against the active reservation. The client calls \texttt{scanVehicle()}, which transitions the phase to SCANNING. Within 1.1 seconds the backend processes the ride-start request, unlocks the vehicle, and transitions phase to RIDING.
+
+Simultaneously, the embedded firmware lights the headlights and sounds the horn to provide haptic confirmation. The \texttt{startRideMetrics} function launches a JavaScript interval that increments \texttt{durationSeconds} every second and calculates \texttt{distanceKm} and \texttt{estimatedCost} in real time, displayed on the Active Rental card.
+
+\subsection{Active Ride Monitoring}
+During the ride, the quadricycle transmits GPS waypoints, which the backend appends to \texttt{vehicle\_locations}. The mobile app can subscribe to these updates via Supabase real-time channels to reflect route history on the map (this feature was prototyped but not fully integrated in the final release). Battery telemetry is similarly streamed, so if the battery percentage drops below 20\% a backend trigger could notify the rider or halt further rentals of that vehicle.
+
+\subsection{Find Vehicle}
+If the user presses "Aracı Bul", the hook calls \texttt{findVehicle()}, which sets a temporary FINDING phase, logs a server message ("Find module: araç sinyalleri tetiklendi"), and reverts to the previous phase (RESERVED or RIDING) after 1 second. The backend instructs the vehicle to emit short acoustic signals for locating the quadricycle in a crowded parking area.
+
+\subsection{Ride Termination and Payment}
+The user presses "Sürüşü Bitir" on the Active Rental card. The \texttt{endRide} function transitions the phase to ENDING, signals the backend, which locks the vehicle and updates \texttt{vehicles.status} back to 'available', finalizes the \texttt{rides} row with \texttt{ended\_at}, \texttt{distance\_km}, and \texttt{duration\_seconds}, and calculates the total fare from the \texttt{pricing\_rules} table. A \texttt{payments} entry is inserted with \texttt{status='captured'} if the transaction completes. Finally, after 3 seconds the app resets to IDLE and returns to the map overview.
+
+Note that the payment module is not currently active in this implementation. The fare calculation and payment record creation are prepared in the backend, but actual payment processing with providers like iyzico or Stripe has not been integrated yet.
+
+Throughout this flow, every state transition is logged by the \texttt{addLog} utility, producing an operator-readable event stream that is invaluable for debugging and regulatory compliance.

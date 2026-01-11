@@ -1,0 +1,45 @@
+\chapter{Introduction}
+
+Urban populations rely more on short trips as part of their daily commutes, but traditional scooter or bike rentals require a lot of manual work at the vehicle. Self-driving quadricycles can move themselves and are generally safer, but they need reliable software for reservations, user authentication, and tracking. This chapter explains the motivation behind the "Self-Driving Quadricycle Rental System with Mobile Application and Map Support", defines the problem, outlines the project scope, and lists the main requirements that guided the design and development.
+
+\section{Background}
+Recent advances in affordable LiDAR sensors, sensor fusion, and drive-by-wire technology allow compact quadricycles to navigate pre-mapped urban streets. But for these vehicles to succeed commercially, they need good software support: a mobile app that users can trust, backend services to handle payments and safety checks, and synchronized map data. RentQuad, the prototype built for this thesis, includes an Expo-based React Native mobile app, Supabase for user authentication and data storage, and microcontrollers on the vehicle that communicate through IoT gateways. The codebase developed for this project has over 3,000 lines implementing the complete system.
+
+\section{Problem Definition}
+The main problem this project solves is the lack of a complete workflow that allows users to find an available autonomous quadricycle, reserve it, unlock it with a QR code, monitor their ride, and finish the rental without needing staff help. Existing systems often use proprietary vehicle firmware with web portals that don't show live data or remember user sessions, which causes delays, payment issues, and risky handoffs. The goal is to build a reliable rental system that supports both reservations and quick-start rides while showing real-time map data and vehicle information.
+
+\section{Objectives and Contributions}
+This thesis has the following objectives:
+\begin{itemize}
+    \item Design an architecture that connects the mobile app, Supabase backend, and quadricycle IoT systems using authenticated APIs and a spatial database.
+    \item Build a rental flow manager that handles each stage (reservation, QR scan, ride, find vehicle, end ride) and logs events for troubleshooting.
+    \item Create an Active Rental interface that shows ride duration, distance, and cost in real time, with safety features like "Aracı Bul" (Find Vehicle) and "Sürüşü Bitir" (End Ride).
+    \item Test the system to verify it works properly and handles the contactless rental workflow.
+\end{itemize}
+
+The project provides a working implementation that can be extended for self-driving quadricycle rental services in Turkish cities.
+
+\section{Requirements}
+The requirements were identified from shared mobility research and discussions with my supervisor. They are organized into functional and non-functional categories.
+
+\subsection{Functional Requirements}
+\begin{enumerate}
+    \item \textbf{Authentication and profiles:} Users shall register, log in, and persist sessions through Supabase Auth with optional "remember me" toggles stored in secure AsyncStorage keys.
+    \item \textbf{Vehicle discovery:} The mobile client shall render nearby quadricycles on the Explore and Home screens by querying vehicle positions from the Supabase PostGIS tables and ordering them by distance to the rider (calculated by the on-device Haversine utility).
+    \item \textbf{Reservation and Active Rental tabs:} A rider shall be able to reserve a vehicle remotely, monitor the reservation countdown, and view the dedicated Active Rental card that lists ride statistics via the \texttt{RideDetailsCard} component.
+    \item \textbf{QR-based ride initiation:} The Scan tab shall use the Expo Camera module to capture QR codes affixed to the quadricycle, validate the token, and unlock the vehicle through the backend "start ride" module.
+    \item \textbf{Ride supervision:} Telemetry sourced from IoT gateways shall periodically update GPS logs and battery levels; the client shall expose "Aracı Bul" for acoustic signaling and "Sürüşü Bitir" for remote locking.
+    \item \textbf{Payment closure:} When a ride is completed the backend shall generate a payment record, capture the fare by combining base, per-minute, and per-kilometer prices, and release the vehicle back into the "available" pool.
+\end{enumerate}
+
+\subsection{Non-Functional Requirements}
+\begin{enumerate}
+    \item \textbf{Scalability:} Backend tables and RPC endpoints must tolerate simultaneous reservations from at least 1,000 active riders by leveraging Supabase row-level security and indexed queries.
+    \item \textbf{Reliability:} Rental flow timers must survive application hibernation; therefore persistent timers and log buffers are implemented in \texttt{useRentalFlow} to rehydrate when the component remounts.
+    \item \textbf{Security and privacy:} Refresh tokens are encrypted at rest in AsyncStorage, QR payloads expire after each ride, and every vehicle event is linked to UUIDs to maintain an auditable trail.
+    \item \textbf{Usability:} The interface adheres to accessible typography, offers Turkish localization, and separates critical actions with dedicated color hierarchies to prevent accidental ride termination.
+    \item \textbf{Maintainability:} The project enforces modular organization (screens, hooks, context, lib, supabase scripts) and contains inline documentation to simplify technology transfer to future student teams.
+\end{enumerate}
+
+\section{Thesis Organization}
+Chapter~\ref{cha:SystemArchitecture} details the system architecture, data model, and rental flow use case, while Chapter~\ref{cha:ImplementationResults} reports the evaluation results and synthesizes conclusions. Supplementary materials such as Supabase DDL scripts and additional UI captures are provided in the appendices.

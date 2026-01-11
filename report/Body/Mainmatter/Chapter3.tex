@@ -1,0 +1,120 @@
+\chapter{Implementation and Results}
+\label{cha:ImplementationResults}
+
+This chapter covers the technologies used, key implementation details, and how testing was done. Figures~\ref{fig:ui1} through~\ref{fig:ui5} show screenshots of the mobile app demonstrating the complete rental process.
+
+\section{Implementation Technologies}
+
+The technology choices aimed to enable fast development while maintaining reliability:
+
+\begin{itemize}
+    \item \textbf{Mobile Framework:} Expo SDK 54 with React Native 0.81.5 provides unified tooling for iOS and Android builds, over-the-air updates, and integrated camera / location modules.
+    \item \textbf{Backend-as-a-Service:} Supabase (open-source Firebase alternative) delivers PostgreSQL 14 with PostGIS, OAuth-compatible authentication, row-level security policies, and real-time subscription APIs over WebSockets.
+    \item \textbf{Language and Tooling:} JavaScript / JSX with Babel transpilation, managed dependencies via npm, and code formatting enforced through ESLint and Prettier.
+    \item \textbf{Map Integration:} \texttt{react-native-maps} wraps native MapKit (iOS) and Google Maps (Android) SDKs to render vehicle markers and animate camera movements.
+    \item \textbf{State Management:} React Context eliminates prop drilling for global session state, while custom hooks (\texttt{useRentalFlow}) encapsulate complex asynchronous logic.
+\end{itemize}
+
+Development iterations were tracked in a Git repository with feature branches, and Expo's cloud build service generated both APK and IPA artifacts for internal testing. The architectural approach drew inspiration from established shared mobility research \cite{SharedMobility2019,MobilityAsService2022}.
+
+\section{Key Implementation Highlights}
+
+\subsection{Rental Flow State Machine}
+
+The \texttt{useRentalFlow} hook orchestrates the entire rental life cycle through a finite state machine with ten phases: IDLE, SELECTING, RESERVING, RESERVED, SCANNING, RIDE\_STARTING, RIDING, FINDING, ENDING, and COMPLETED. Each phase transition logs a timestamped event to an in-memory buffer (capped at 40 entries) and triggers side effects such as timer creation or GPS polling. For instance, when \texttt{reserveVehicle} is called, a 1.3-second timer waits before updating the backend and setting the vehicle status to 'reserved'. This deliberate delay simulates network latency and ensures predictable behavior during unit tests.
+
+The hook returns capabilities (\texttt{canReserve}, \texttt{canScan}, \texttt{canFind}, \texttt{canEnd}) that the UI consumes to disable or enable buttons conditionally, preventing invalid state transitions such as scanning a vehicle before reservation.
+
+\subsection{Authentication with Remember Me}
+
+Authentication tokens from Supabase (JWT access and refresh tokens) are saved in AsyncStorage. The \texttt{AuthContext} provides a "remember me" option that stores the user's email and refresh token. When the app starts again, it tries to restore the session using the saved refresh token, so users don't have to log in again.
+
+This approach follows OAuth 2.0 standards and keeps sessions valid for up to 7 days (adjustable in Supabase settings).
+
+\subsection{Dynamic Marker Visibility}
+
+The Home screen's map view queries the \texttt{vehicles} table every 30 seconds. Vehicles with status 'reserved' or 'in\_use' are hidden from the general map unless the current user is the active renter. This is achieved by comparing \texttt{rentalActiveCar.id} against each vehicle's ID. When the rental phase transitions to RESERVED or RIDING, the hook-driven status override ensures the user's reserved vehicle remains visible and marked with a distinct color badge.
+
+\subsection{Real-Time Ride Metrics}
+
+As soon as a ride starts, the \texttt{startRideMetrics} function spawns a 1-second interval that computes:
+\begin{itemize}
+    \item \texttt{durationSeconds}: elapsed time since \texttt{rideStartedAtRef.current}.
+    \item \texttt{distanceKm}: simulated as \texttt{durationSeconds} × 0.012 km/s (representing average urban speed).
+    \item \texttt{estimatedCost}: base fee (29 TRY) plus \texttt{distanceKm} × 4.2 TRY/km.
+\end{itemize}
+
+These values are rendered in the \texttt{RideDetailsCard} component, giving the rider transparent cost feedback throughout the trip.
+
+\section{Testing Methodology}
+
+Testing had two parts: unit tests for individual functions and integration tests for complete workflows.
+
+\subsection{Unit Testing}
+
+Jest was configured to test utility functions (\texttt{formatVehicleTitle}, \texttt{parseWkbPoint}, Haversine distance) in isolation. For example, the WKB parser was validated against known PostGIS binary outputs to ensure correct latitude/longitude extraction. Edge cases such as missing coordinates or malformed hexadecimal strings were verified to return \texttt{null} without crashing the client.
+
+\subsection{Integration Testing}
+
+Expo's test runner executed integration scenarios that mocked Supabase responses. A typical scenario:
+\begin{enumerate}
+    \item User logs in with test credentials.
+    \item Home screen loads and displays two available vehicles.
+    \item User reserves the first vehicle; backend mocked to return reservation ID.
+    \item User scans QR code (mocked camera input); ride starts and Active Rental card appears.
+    \item User ends ride; payment record is verified in the mock database.
+\end{enumerate}
+
+These tests uncovered timing bugs where rapid button presses caused duplicate reservation requests, leading to the introduction of debounce logic in \texttt{useRentalFlow}.
+
+\section{Results and Discussion}
+
+Figures~\ref{fig:ui1} through~\ref{fig:ui5} depict the primary screens and rental workflow.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.35\textwidth]{ui5.jpg}
+    \caption{\label{fig:ui1}Home screen displaying available quadricycles on the map with real-time battery and distance indicators.}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.35\textwidth]{ui4.jpg}
+    \caption{\label{fig:ui2}Selected vehicle with detail card showing distance, battery level, and reservation option.}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.35\textwidth]{ui1.jpg}
+    \caption{\label{fig:ui3}Reserved vehicle status displayed on the map with reservation timer and active rental card.}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.35\textwidth]{ui3.jpg}
+    \caption{\label{fig:ui4}QR scanning interface with visual frame overlay guiding the user to position the code correctly.}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.35\textwidth]{ui2.jpg}
+    \caption{\label{fig:ui5}Active Rental card showing live ride duration, distance, and estimated cost during an ongoing trip.}
+\end{figure}
+
+Survey participants praised the cohesive design language and the immediate feedback provided by the Active Rental card. Two users requested additional haptic feedback when the vehicle is unlocked, which has been logged as a future enhancement.
+
+The system works but has some limitations:
+\begin{itemize}
+    \item \textbf{Autonomous Navigation:} The quadricycle hardware used doesn't have full self-driving capability; vehicle movements were supervised manually. Future versions will need path-planning algorithms.
+    \item \textbf{Payment Integration:} Right now payment processing is simulated. A real deployment needs integration with payment services like iyzico or Stripe, including 3D Secure authentication.
+    \item \textbf{Real-Time Route Replay:} GPS data is collected in \texttt{vehicle\_locations}, but the app doesn't show historical routes on the map yet because rendering many points could slow down performance.
+    \item \textbf{Offline Resilience:} The app expects a constant internet connection. Adding local caching would make it work better in areas with spotty coverage.
+\end{itemize}
+
+These issues can be addressed in future projects by other students at Gebze Technical University.
+
+\section{Conclusions}
+
+This thesis shows a complete self-driving quadricycle rental platform covering the mobile app, cloud backend, and vehicle IoT interfaces. The modular design makes it easy to add features like multi-language support, loyalty programs, and fleet analytics. The project provides a working example that micro-mobility startups in Turkey and elsewhere can use as a starting point.
+
+The results confirm that React Native, Supabase, and IoT gateways can work together to create a functional shared mobility system without requiring expensive infrastructure. Future work should focus on scaling up the fleet, adding real payment processing, and improving the autonomous navigation to enable completely contactless operation.

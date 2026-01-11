@@ -1,0 +1,3 @@
+password: wPLfvAVEKKYWnRbB
+url: https://hzixxksnyjwhtqvonxki.supabase.co
+publishable key: sb_publishable_5GE-IZXwU0dyM2Et1kZfhA_Vm9fF9ec
