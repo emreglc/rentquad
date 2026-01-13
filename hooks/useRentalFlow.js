@@ -139,11 +139,8 @@ const useRentalFlow = () => {
             addLog('Vehicle', 'Rezervasyon bildirimi (ışık kapalı).');
             setPhase(PHASES.RESERVED);
             updateVehicleStatus(activeCar.id, 'reserved');
-            if (!rideMetricsIntervalRef.current) {
-                startRideMetrics();
-            }
         }, 1300);
-    }, [activeCar, addLog, registerTimer, startRideMetrics, updateVehicleStatus]);
+    }, [activeCar, addLog, registerTimer, updateVehicleStatus]);
 
     const scanVehicle = useCallback(() => {
         if (!activeCar) return;
@@ -226,15 +223,46 @@ const useRentalFlow = () => {
         canEnd: [PHASES.RESERVED, PHASES.SCANNING, PHASES.RIDE_STARTING, PHASES.RIDING, PHASES.FINDING].includes(phase),
     }), [phase]);
 
+    // Direct QR rental - complete flow without reservation step
+    const startDirectRental = useCallback((car) => {
+        if (!car) return;
+        clearAllTimers();
+        stopGps();
+        setActiveCar(car);
+        setLogs([]);
+        addLog('Client', `${car.title} için QR ile kiralama başlatıldı.`);
+        
+        // Skip to scanning phase directly
+        setPhase(PHASES.SCANNING);
+        addLog('Client', 'QR tarandı, sürüş başlatma isteği gönderildi.');
+        
+        registerTimer(() => {
+            addLog('Server', 'Start ride module isteği işliyor.');
+            addLog('Vehicle', 'Araç kilidi açıldı, farlar & korna çalıştı.');
+            setPhase(PHASES.RIDE_STARTING);
+            updateVehicleStatus(car.id, 'in_use');
+            
+            registerTimer(() => {
+                setPhase(PHASES.RIDING);
+                addLog('Vehicle', 'Sürüş başladı, GPS verileri gönderiliyor.');
+                startGps();
+                if (!rideMetricsIntervalRef.current) {
+                    startRideMetrics();
+                }
+            }, 1200);
+        }, 1100);
+    }, [addLog, clearAllTimers, registerTimer, startGps, startRideMetrics, stopGps, updateVehicleStatus]);
+
     return {
         phase,
         activeCar,
         logs,
         rideStats,
-    flowInProgress,
+        flowInProgress,
         beginRental,
         reserveVehicle,
         scanVehicle,
+        startDirectRental,
         findVehicle,
         endRide,
         resetFlow,

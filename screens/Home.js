@@ -15,7 +15,7 @@ import formatVehicleTitle from '../lib/vehicleUtils';
 const FLOW_LABELS = {
     [PHASES.IDLE]: 'Hazır',
     [PHASES.SELECTING]: 'Araç seçildi',
-    [PHASES.RESERVING]: 'Rezervasyon gönderiliyor',
+    [PHASES.RESERVING]: 'İstek işleniyor',
     [PHASES.RESERVED]: 'Araç rezerve edildi',
     [PHASES.SCANNING]: 'QR taraması',
     [PHASES.RIDE_STARTING]: 'Sürüş başlatılıyor',
@@ -96,6 +96,7 @@ export default function Home({ navigation, route }) {
         beginRental,
         reserveVehicle,
         scanVehicle,
+        startDirectRental,
         findVehicle,
         endRide,
         capabilities: rentalCapabilities,
@@ -209,6 +210,43 @@ export default function Home({ navigation, route }) {
         setVehiclesLoading(false);
     }, []);
 
+    // Scenario 1: Direct QR scan - user scanned QR first, start ride immediately
+    useEffect(() => {
+        if (route?.params?.startRentalForVehicle) {
+            const vehicle = route.params.startRentalForVehicle;
+            
+            // Use direct rental - skips reservation, goes straight to riding
+            startDirectRental(vehicle);
+            setSelectedCarId(vehicle.id);
+            
+            // Zoom to vehicle
+            if (mapRef.current && vehicle.latitude && vehicle.longitude) {
+                mapRef.current.animateToRegion({
+                    latitude: vehicle.latitude,
+                    longitude: vehicle.longitude,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                }, 500);
+            }
+            
+            navigation.setParams({ startRentalForVehicle: undefined });
+        }
+    }, [route?.params?.startRentalForVehicle, startDirectRental, navigation]);
+
+    // Scenario 2: Manual reservation from map, then scan QR to start ride
+    useEffect(() => {
+        if (route?.params?.completeScanForVehicle) {
+            const vehicleId = route.params.completeScanForVehicle;
+            
+            // Only scan if this matches the reserved vehicle
+            if (rentalActiveCar && rentalActiveCar.id === vehicleId) {
+                scanVehicle();
+            }
+            
+            navigation.setParams({ completeScanForVehicle: undefined });
+        }
+    }, [route?.params?.completeScanForVehicle, rentalActiveCar, scanVehicle, navigation]);
+
     useEffect(() => {
         loadVehicles();
         const interval = setInterval(loadVehicles, 30000);
@@ -305,7 +343,6 @@ export default function Home({ navigation, route }) {
             pendingReserveCarIdRef.current = null;
         }
     }, [rentalActiveCar, rentalPhase, reserveVehicle]);
-
 
     const displayCars = useMemo(() => {
         if (!availableVehicles.length) return [];
@@ -462,9 +499,24 @@ export default function Home({ navigation, route }) {
     const endActionLabel = [PHASES.RESERVING, PHASES.RESERVED].includes(rentalPhase) ? 'İptal Et' : 'Sürüşü Bitir';
     const selectedCarBattery = Math.max(0, Math.min(100, selectedCar?.battery ?? 0));
 
+    // Clear selection when ride ends
+    useEffect(() => {
+        if (rentalPhase === PHASES.COMPLETED || rentalPhase === PHASES.IDLE) {
+            setSelectedCarId(null);
+        }
+    }, [rentalPhase]);
+
+    // Clear selection when ride ends
+    useEffect(() => {
+        if (rentalPhase === PHASES.COMPLETED || rentalPhase === PHASES.IDLE) {
+            setSelectedCarId(null);
+        }
+    }, [rentalPhase]);
+
     const handleReservePress = () => {
         if (!selectedCar || !canSelectForFlow || reserveDisabled) return;
         const targetCarId = selectedCar.id;
+        
         if (!activeCarRef.current) {
             pendingReserveCarIdRef.current = targetCarId;
             beginRental(selectedCar);
@@ -587,7 +639,7 @@ export default function Home({ navigation, route }) {
                         carName={rentalActiveCar.title}
                         stats={rideStats}
                         phaseLabel={FLOW_LABELS[rentalPhase]}
-                        onScanPress={scanVehicle}
+                        onScanPress={() => navigation.navigate('Scan')}
                         onFindPress={findVehicle}
                         onEndPress={endRide}
                         showScanButton={rentalCapabilities.canScan}
@@ -601,6 +653,8 @@ export default function Home({ navigation, route }) {
                         statusMessage={
                             rentalPhase === PHASES.RESERVED
                                 ? 'Araç rezerve edildi. QR kodu tarayarak sürüşü başlat.'
+                                : rentalPhase === PHASES.FINDING
+                                ? 'Korna çalınıyor, ışıklar yakılıyor...'
                                 : 'Rezervasyon isteği işleniyor...'
                         }
                     />
@@ -654,8 +708,7 @@ export default function Home({ navigation, route }) {
                             {showQrButton && (
                                 <FlowButton
                                     label="QR Tara"
-                                    disabled={!rentalCapabilities.canScan}
-                                    onPress={scanVehicle}
+                                    onPress={() => navigation.navigate('Scan')}
                                 />
                             )}
                             {showFindButton && (

@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Linking, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Button, ActivityIndicator, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useNavigation } from '@react-navigation/native';
+import supabase from '../lib/supabaseClient';
+import formatVehicleTitle from '../lib/vehicleUtils';
+import useRentalFlow from '../hooks/useRentalFlow';
 
 export default function ScanQR() {
+  const navigation = useNavigation();
+  const { activeCar, scanVehicle } = useRentalFlow();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (!permission) {
@@ -38,12 +45,144 @@ export default function ScanQR() {
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
         }}
-        onBarcodeScanned={(result) => {
-          if (scanned) return;
-          setScanned(true);
+        onBarcodeScanned={async (result) => {
+          if (scanned || processing) return;
+          
           const data = result?.data;
-          if (data?.startsWith('http')) {
-            Linking.openURL(data).catch(() => {});
+          
+          // Check if this is a RentQuad vehicle QR code
+          if (data?.startsWith('RENTQUAD_VEHICLE:')) {
+            setScanned(true);
+            setProcessing(true);
+            const vehicleId = data.replace('RENTQUAD_VEHICLE:', '');
+            
+            try {
+              // If there's already a reserved vehicle, check if this matches
+              if (activeCar) {
+                if (activeCar.id === vehicleId) {
+                  // Correct vehicle scanned - navigate back and trigger scan
+                  navigation.navigate('Ana Sayfa', {
+                    completeScanForVehicle: vehicleId,
+                  });
+                  setProcessing(false);
+                } else {
+                  // Wrong vehicle scanned - different from reserved
+                  Alert.alert(
+                    'Zaten Bir Rezervasyonunuz Var',
+                    `Rezerve ettiğiniz araç: ${activeCar.code || activeCar.title}\n\nLütfen rezervasyonu iptal edin veya doğru aracın QR kodunu taratın.`,
+                    [{ text: 'Tamam', onPress: () => { setScanned(false); setProcessing(false); } }]
+                  );
+                }
+                return;
+              }
+              
+              // No reserved vehicle - start new rental
+              // Fetch vehicle details from database
+              const { data: vehicleData, error } = await supabase
+                .from('vehicles')
+                .select('*')
+                .eq('id', vehicleId)
+                .single();
+              
+              if (error || !vehicleData) {
+                Alert.alert(
+                  'Araç Bulunamadı',
+                  'Bu QR koduna ait araç sistemde bulunamadı.',
+                  [{ text: 'Tekrar Dene', onPress: () => { setScanned(false); setProcessing(false); } }]
+                );
+                return;
+              }
+              
+              // Check if vehicle is available
+              if (vehicleData.status !== 'available') {
+                Alert.alert(
+                  'Araç Müsait Değil',
+                  `${vehicleData.code || 'Bu araç'} şu anda kullanımda veya bakımda. Lütfen başka bir araç seçin.`,
+                  [{ text: 'Tamam', onPress: () => { setScanned(false); setProcessing(false); } }]
+                );
+                return;
+              }
+              
+              // Parse vehicle location
+              let latitude = null;
+              let longitude = null;
+              if (vehicleData.current_location) {
+                const locationStr = vehicleData.current_location;
+                const clean = locationStr.startsWith('\\x') ? locationStr.slice(2) : locationStr;
+                if (clean.length >= 34) {
+                  const buffer = new ArrayBuffer(clean.length / 2);
+                  const view = new DataView(buffer);
+                  for (let i = 0; i < clean.length; i += 2) {
+                    view.setUint8(i / 2, parseInt(clean.substr(i, 2), 16));
+                  }
+                  const littleEndian = view.getUint8(0) === 1;
+                  let offset = 1;
+                  const type = view.getUint32(offset, littleEndian);
+                  offset += 4;
+                  const EWKB_SRID_FLAG = 0x20000000;
+                  if ((type & EWKB_SRID_FLAG) !== 0) {
+                    offset += 4;
+                  }
+                  longitude = view.getFloat64(offset, littleEndian);
+                  latitude = view.getFloat64(offset + 8, littleEndian);
+                }
+              }
+              
+              const vehicleForRental = {
+                id: vehicleData.id,
+                code: vehicleData.code,
+                title: formatVehicleTitle(vehicleData),
+                battery: vehicleData.battery_percent,
+                latitude,
+                longitude,
+                ...vehicleData,
+              };
+              
+              // Show confirmation dialog
+              Alert.alert(
+                'Kiralamayı Başlat?',
+                `${vehicleForRental.title}\nBatarya: ${vehicleForRental.battery}%\n\nBu aracı kiralamak istediğinize emin misiniz?`,
+                [
+                  {
+                    text: 'İptal',
+                    style: 'cancel',
+                    onPress: () => {
+                      setScanned(false);
+                      setProcessing(false);
+                    }
+                  },
+                  {
+                    text: 'Kirala',
+                    onPress: () => {
+                      // Navigate to Home and start rental
+                      navigation.navigate('Ana Sayfa', {
+                        startRentalForVehicle: vehicleForRental,
+                      });
+                      setProcessing(false);
+                      // Don't reset scanned so camera doesn't restart immediately
+                    }
+                  }
+                ]
+              );
+              
+            } catch (err) {
+              console.error('Error fetching vehicle:', err);
+              Alert.alert(
+                'Hata',
+                'Araç bilgileri yüklenirken bir hata oluştu. Lütfen tekrar deneyin.',
+                [{ text: 'Tamam', onPress: () => { setScanned(false); setProcessing(false); } }]
+              );
+            }
+          } else {
+            // Invalid QR code
+            setScanned(true);
+            Alert.alert(
+              'Geçersiz QR Kod', 
+              'Bu QR kodu RentQuad uygulamasına ait değil. Lütfen aracın üzerindeki QR kodu taratın.',
+              [
+                { text: 'Tekrar Dene', onPress: () => { setScanned(false); setProcessing(false); } }
+              ]
+            );
           }
         }}
       />
@@ -64,10 +203,28 @@ export default function ScanQR() {
       </View>
       <View style={styles.sheetWrapper}>
         <View style={styles.sheetCard}>
-          <Text style={styles.sheetTitle}>QR Kodunu Tara</Text>
-          <Text style={styles.sheetDescription}>Kiralamayı Başlatmak İçin Aracın Üzerindeki QR Kodunu Taratın</Text>
-          {scanned ? (
-            <Button title="Tekrar Tara" onPress={() => setScanned(false)} />
+          {activeCar ? (
+            <>
+              <Text style={styles.sheetTitle}>Rezerve Edilmiş Araç</Text>
+              <Text style={styles.sheetDescription}>
+                {activeCar.code || activeCar.title} için QR kodunu taratın
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.sheetTitle}>QR Kodunu Tara</Text>
+              <Text style={styles.sheetDescription}>
+                Kiralamayı Başlatmak İçin Aracın Üzerindeki QR Kodunu Taratın
+              </Text>
+            </>
+          )}
+          {processing ? (
+            <View style={styles.processingContainer}>
+              <ActivityIndicator color="#0A84FF" size="small" />
+              <Text style={styles.processingText}>Araç bilgileri yükleniyor...</Text>
+            </View>
+          ) : scanned ? (
+            <Button title="Tekrar Tara" onPress={() => { setScanned(false); setProcessing(false); }} />
           ) : (
             <Text style={styles.sheetHint}>Kamera hazır, kodu çerçeve içine getir.</Text>
           )}
@@ -191,5 +348,15 @@ const styles = StyleSheet.create({
   sheetHint: {
     fontSize: 13,
     color: '#475569',
+  },
+  processingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  processingText: {
+    fontSize: 14,
+    color: '#64748b',
+    marginLeft: 8,
   },
 });
