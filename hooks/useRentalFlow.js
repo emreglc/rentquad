@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import supabase from '../lib/supabaseClient';
 
 const PHASES = {
@@ -268,6 +268,24 @@ const useRentalFlow = () => {
         resetFlow,
         capabilities,
     };
+};
+
+// Create Context
+const RentalFlowContext = createContext(null);
+
+// Provider Component
+export const RentalFlowProvider = ({ children }) => {
+    const value = useRentalFlow();
+    return <RentalFlowContext.Provider value={value}>{children}</RentalFlowContext.Provider>;
+};
+
+// Hook to use the context
+export const useRentalFlowContext = () => {
+    const context = useContext(RentalFlowContext);
+    if (!context) {
+        throw new Error('useRentalFlowContext must be used within RentalFlowProvider');
+    }
+    return context;
 };
 
 export { PHASES };

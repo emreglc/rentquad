@@ -13,9 +13,13 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.rentquad.app",
+      "buildNumber": "1.0.0",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.rentquad.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -25,14 +29,22 @@
         "googleMaps": {
           "apiKey": "AIzaSyA4xeWAToNEXXi8SC4EP1yvSuq8zh1-wuI"
         }
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "supabaseUrl": "https://hzixxksnyjwhtqvonxki.supabase.co",
-      "supabaseAnonKey": "sb_publishable_5GE-IZXwU0dyM2Et1kZfhA_Vm9fF9ec"
+      "supabaseAnonKey": "sb_publishable_5GE-IZXwU0dyM2Et1kZfhA_Vm9fF9ec",
+      "eas": {
+        "projectId": "def19019-d245-423f-accd-1290c71da012"
+      }
     }
   }
 }

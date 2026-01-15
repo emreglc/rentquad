@@ -7,7 +7,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 // import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useRentalFlow, { PHASES } from '../hooks/useRentalFlow';
+import { useRentalFlowContext, PHASES } from '../hooks/useRentalFlow';
 import RideDetailsCard from '../components/RideDetailsCard';
 import supabase from '../lib/supabaseClient';
 import formatVehicleTitle from '../lib/vehicleUtils';
@@ -100,7 +100,7 @@ export default function Home({ navigation, route }) {
         findVehicle,
         endRide,
         capabilities: rentalCapabilities,
-    } = useRentalFlow();
+    } = useRentalFlowContext();
 
     // Safe area insets to offset map controls away from the status bar
     const insets = useSafeAreaInsets();
@@ -1039,7 +1039,6 @@ const markerStyles = StyleSheet.create({
     pointerSlot: {
         width: 16,
         height: 8,
-        marginTop: -2,
         overflow: 'hidden',
         alignItems: 'center',
         justifyContent: 'flex-start',
@@ -1047,9 +1046,9 @@ const markerStyles = StyleSheet.create({
     pointer: {
         width: 0,
         height: 0,
-        borderLeftWidth: 8,
-        borderRightWidth: 8,
-        borderTopWidth: 10,
+        borderLeftWidth: 6,
+        borderRightWidth: 6,
+        borderTopWidth: 6,
         borderLeftColor: 'transparent',
         borderRightColor: 'transparent',
         borderTopColor: '#111827',

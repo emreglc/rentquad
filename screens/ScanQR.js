@@ -4,15 +4,21 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import supabase from '../lib/supabaseClient';
 import formatVehicleTitle from '../lib/vehicleUtils';
-import useRentalFlow from '../hooks/useRentalFlow';
+import { useRentalFlowContext } from '../hooks/useRentalFlow';
 
 export default function ScanQR() {
   const navigation = useNavigation();
-  const { activeCar, scanVehicle } = useRentalFlow();
+  const { activeCar, scanVehicle, phase } = useRentalFlowContext();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('ScanQR - activeCar:', activeCar);
+    console.log('ScanQR - phase:', phase);
+  }, [activeCar, phase]);
 
   useEffect(() => {
     if (!permission) {
@@ -58,7 +64,10 @@ export default function ScanQR() {
             
             try {
               // If there's already a reserved vehicle, check if this matches
+              console.log('Checking reservation - activeCar:', activeCar, 'scannedId:', vehicleId);
+              
               if (activeCar) {
+                console.log('Active car found:', activeCar.id, 'vs scanned:', vehicleId);
                 if (activeCar.id === vehicleId) {
                   // Correct vehicle scanned - navigate back and trigger scan
                   navigation.navigate('Ana Sayfa', {
@@ -68,9 +77,18 @@ export default function ScanQR() {
                 } else {
                   // Wrong vehicle scanned - different from reserved
                   Alert.alert(
-                    'Zaten Bir Rezervasyonunuz Var',
-                    `Rezerve ettiğiniz araç: ${activeCar.code || activeCar.title}\n\nLütfen rezervasyonu iptal edin veya doğru aracın QR kodunu taratın.`,
-                    [{ text: 'Tamam', onPress: () => { setScanned(false); setProcessing(false); } }]
+                    'Yanlış Araç!',
+                    `Rezerve ettiğiniz araç: ${activeCar.code || activeCar.title}\n\nLütfen rezerve ettiğiniz aracın QR kodunu taratın veya rezervasyonu iptal edin.`,
+                    [
+                      { 
+                        text: 'Tamam', 
+                        style: 'cancel',
+                        onPress: () => { 
+                          setScanned(false); 
+                          setProcessing(false); 
+                        } 
+                      }
+                    ]
                   );
                 }
                 return;

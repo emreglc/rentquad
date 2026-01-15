@@ -12,6 +12,7 @@ import Settings from "./screens/Settings";
 import Explore from "./screens/Explore";
 import AuthScreen from "./screens/Auth";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { RentalFlowProvider } from "./hooks/useRentalFlow";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -126,9 +127,11 @@ function RootNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <RentalFlowProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </RentalFlowProvider>
     </AuthProvider>
   );
 }
